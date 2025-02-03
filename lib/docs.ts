@@ -1,6 +1,8 @@
 import { google } from "googleapis";
 import { cookies } from "next/headers";
 import { validateAndRefreshToken } from "./google-auth";
+import { marked } from "marked";
+import HTMLtoDOCX from "html-to-docx";
 
 async function getDocsClient() {
   const cookieStore = await cookies();
@@ -28,106 +30,26 @@ interface DocParams {
   folderId?: string;
 }
 
-interface DocFormatRequest {
-  text: string;
-  style?: 'HEADING_1' | 'HEADING_2' | 'NORMAL_TEXT';
-  bullet?: boolean;
-  bold?: boolean;
-  italic?: boolean;
-}
+async function markdownToDocx(markdown: string) {
+  // Convert markdown to HTML using marked
+  const html = await marked(markdown);
 
-function createTextRequest(params: DocFormatRequest, index: number) {
-  const requests: unknown[] = [];
-  const endIndex = index + params.text.length;
+  // Configure html-to-docx options
+  const options = {
+    margins: {
+      top: 1440, // 1 inch
+      right: 1440,
+      bottom: 1440,
+      left: 1440,
+    },
+    font: "Arial",
+    fontSize: 11,
+    title: "Converted Document",
+  };
 
-  // Insert the text
-  requests.push({
-    insertText: {
-      location: { index },
-      text: params.text + '\n'
-    }
-  });
-
-  // Apply paragraph style if specified
-  if (params.style) {
-    requests.push({
-      updateParagraphStyle: {
-        range: { startIndex: index, endIndex: endIndex + 1 },
-        paragraphStyle: { namedStyleType: params.style },
-        fields: 'namedStyleType'
-      }
-    });
-  }
-
-  // Apply bullet style if specified
-  if (params.bullet) {
-    requests.push({
-      createParagraphBullets: {
-        range: { startIndex: index, endIndex: endIndex + 1 },
-        bulletPreset: 'BULLET_DISC_CIRCLE_SQUARE'
-      }
-    });
-  }
-
-  // Apply text style if specified
-  if (params.bold || params.italic) {
-    requests.push({
-      updateTextStyle: {
-        range: { startIndex: index, endIndex: endIndex },
-        textStyle: {
-          bold: params.bold || null,
-          italic: params.italic || null
-        },
-        fields: 'bold,italic'
-      }
-    });
-  }
-
-  return requests;
-}
-
-function formatContent(content: string) {
-  const lines = content.split('\n');
-  let requests: unknown[] = [];
-  let currentIndex = 1; // Start at 1 because 0 is reserved
-
-  lines.forEach((line) => {
-    const trimmedLine = line.trim();
-    if (!trimmedLine) {
-      requests.push({
-        insertText: {
-          location: { index: currentIndex },
-          text: '\n'
-        }
-      });
-      currentIndex += 1;
-      return;
-    }
-
-    const formatRequest: DocFormatRequest = {
-      text: trimmedLine
-    };
-
-    // Check for headings
-    if (line.startsWith('Title:')) {
-      formatRequest.text = line.slice(6).trim();
-      formatRequest.style = 'HEADING_1';
-      formatRequest.bold = true;
-    } else if (line.startsWith('Section:')) {
-      formatRequest.text = line.slice(8).trim();
-      formatRequest.style = 'HEADING_2';
-    } else if (line.startsWith('•')) {
-      formatRequest.text = line.slice(1).trim();
-      formatRequest.bullet = true;
-    } else {
-      formatRequest.style = 'NORMAL_TEXT';
-    }
-
-    requests = requests.concat(createTextRequest(formatRequest, currentIndex));
-    currentIndex += formatRequest.text.length + 1;
-  });
-
-  return requests;
+  // Convert HTML to DOCX buffer
+  const buffer = await HTMLtoDOCX(html, null, options);
+  return buffer;
 }
 
 export const EXAMPLE_STRUCTURES = {
@@ -138,7 +60,7 @@ export const EXAMPLE_STRUCTURES = {
     "Agenda Items",
     "Discussion Points",
     "Action Items",
-    "Next Steps"
+    "Next Steps",
   ],
   PROJECT_STRUCTURE: [
     "Project Title",
@@ -146,7 +68,7 @@ export const EXAMPLE_STRUCTURES = {
     "Objectives",
     "Timeline",
     "Resources",
-    "Risks and Mitigation"
+    "Risks and Mitigation",
   ],
   REPORT_STRUCTURE: [
     "Title",
@@ -154,13 +76,13 @@ export const EXAMPLE_STRUCTURES = {
     "Key Findings",
     "Analysis",
     "Recommendations",
-    "Conclusion"
+    "Conclusion",
   ],
 } as const;
 
 export async function createDoc({ title, content, folderId }: DocParams) {
   try {
-    const { docs, drive } = await getDocsClient();
+    const { drive } = await getDocsClient();
 
     // First create an empty document
     const fileMetadata = {
@@ -178,12 +100,27 @@ export async function createDoc({ title, content, folderId }: DocParams) {
       throw new Error("Failed to create document");
     }
 
-    // If content is provided, format and update the document
+    // If content is provided, convert markdown to docx and upload
     if (content) {
-      await docs.documents.batchUpdate({
-        documentId: file.data.id,
+      // Convert markdown to DOCX
+      const docxBuffer = await markdownToDocx(content);
+
+      // Upload the DOCX file
+      await drive.files.update({
+        fileId: file.data.id,
+        media: {
+          mimeType:
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          body: docxBuffer,
+        },
+      });
+
+      // Convert the uploaded DOCX to Google Docs format
+      await drive.files.copy({
+        fileId: file.data.id,
         requestBody: {
-          requests: formatContent(content),
+          mimeType: "application/vnd.google-apps.document",
+          name: title,
         },
       });
     }
@@ -250,7 +187,7 @@ export async function updateDoc(documentId: string, content: string) {
 export async function listDocs() {
   try {
     const { drive } = await getDocsClient();
-    
+
     const response = await drive.files.list({
       q: "mimeType='application/vnd.google-apps.document'",
       fields: "files(id, name, webViewLink, createdTime)",
