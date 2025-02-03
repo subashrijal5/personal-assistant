@@ -30,19 +30,41 @@ interface EmailParams {
 export async function sendEmail({ to, subject, body, cc, bcc }: EmailParams) {
   try {
     const gmail = await getGmailClient();
-    
-    const message = [
+
+    // Get user's email for the From field
+    const profile = await gmail.users.getProfile({ userId: 'me' });
+    const fromEmail = profile.data.emailAddress;
+
+    // Format date according to RFC 2822
+    const date = new Date().toUTCString();
+
+    // Encode subject for UTF-8
+    const encodedSubject = subject
+      .split('')
+      .map(char => {
+        const code = char.charCodeAt(0);
+        return code > 127 ? `=?UTF-8?B?${Buffer.from(char).toString('base64')}?=` : char;
+      })
+      .join('');
+
+    // Construct email headers according to RFC 2822
+    const headers = [
+      `From: ${fromEmail}`,
+      `Date: ${date}`,
       `To: ${to}`,
       cc ? `Cc: ${cc}` : '',
       bcc ? `Bcc: ${bcc}` : '',
-      `Subject: ${subject}`,
-      '',
+      'MIME-Version: 1.0',
+      'Content-Type: text/plain; charset=UTF-8',
+      'Content-Transfer-Encoding: 8bit',
+      `Subject: ${encodedSubject}`,
+      '', // Empty line between headers and body is required
       body,
     ]
       .filter(Boolean)
-      .join('\n');
+      .join('\r\n'); // RFC 2822 requires CRLF
 
-    const encodedMessage = Buffer.from(message)
+    const encodedMessage = Buffer.from(headers)
       .toString('base64')
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
