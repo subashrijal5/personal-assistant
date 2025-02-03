@@ -45,6 +45,7 @@ export async function POST(req: Request) {
 
 When interacting:
 1. Be concise and professional in your responses
+2. Always explain and return small message along with a tool call to execute the action
 2. Always confirm important actions before executing them
 3. Maintain user privacy and security
 4. Ask for clarification when needed
@@ -182,10 +183,12 @@ Your goal is to make the user's life easier by managing their tasks, communicati
         },
       }),
       listDocs: tool({
-        description: "List recent Google Docs",
-        parameters: z.object({}),
-        execute: async function () {
-          return await listDocs();
+        description: "Search and list Google Docs. If no query is provided, lists recent docs.",
+        parameters: z.object({
+          query: z.string().optional().describe('Search query to find specific documents')
+        }),
+        execute: async function ({ query }) {
+          return await listDocs(query);
         },
       }),
     },

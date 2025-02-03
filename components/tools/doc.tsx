@@ -1,10 +1,12 @@
 import { ToolInvocation } from "ai";
 import { FileText, AlertCircle, Check, ExternalLink } from "lucide-react";
+import { useChatContext } from "../chat-context";
 
 interface Doc {
   id: string;
   title: string;
   link: string;
+  webViewLink?: string;
   name?: string;
 }
 
@@ -18,6 +20,7 @@ export default function Doc({
   }
 
   const isCreate = toolInvocation.toolName === "createDoc";
+
   const isList = toolInvocation.toolName === "listDocs";
   const isUpdate = toolInvocation.toolName === "updateDoc";
 
@@ -83,21 +86,38 @@ export default function Doc({
 }
 
 function DocCard({ doc }: { doc: Doc }) {
+  const { setInput } = useChatContext();
+
+  const handleDocClick = () => {
+    setInput(
+      `Can you check this document and give me an overview? Document ID: ${doc.id}`
+    );
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between gap-4 mb-4">
+    <div
+      onClick={handleDocClick}
+      className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow cursor-pointer group"
+    >
+      <div className="flex items-start justify-between gap-4 mb-2">
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-gray-900">{doc.title ?? doc.name}</h3>
+          <h3 className="font-medium text-gray-900 group-hover:text-primary transition-colors">
+            {doc.title ?? doc.name}
+          </h3>
         </div>
         <a
-          href={doc.link}
+          href={doc.link ?? doc.webViewLink}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors"
+          onClick={(e) => e.stopPropagation()} // Prevent card click when clicking the link
         >
           <ExternalLink className="w-4 h-4" />
           Open in new tab
         </a>
+      </div>
+      <div className="text-sm text-gray-500 group-hover:text-gray-700 transition-colors">
+        Click to get an overview of this document
       </div>
     </div>
   );

@@ -43,7 +43,7 @@ async function markdownToDocx(markdown: string) {
       left: 1440,
     },
     font: "Arial",
-    fontSize: 11,
+    fontSize: 14,
     title: "Converted Document",
   };
 
@@ -184,16 +184,37 @@ export async function updateDoc(documentId: string, content: string) {
   }
 }
 
-export async function listDocs() {
+export async function listDocs(query?: string) {
   try {
     const { drive } = await getDocsClient();
 
+    // Base query to get only Google Docs
+    let searchQuery = "mimeType='application/vnd.google-apps.document'";
+
+    // If search query is provided, add it to the search
+    if (query) {
+      // Escape single quotes in the query
+      const escapedQuery = query.replace(/'/g, "\\'");
+      // Search in both title and full text
+      searchQuery += ` and (name contains '${escapedQuery}' or fullText contains '${escapedQuery}')`;
+    }
+
     const response = await drive.files.list({
-      q: "mimeType='application/vnd.google-apps.document'",
-      fields: "files(id, name, webViewLink, createdTime)",
-      orderBy: "createdTime desc",
-      pageSize: 10,
+      q: searchQuery,
+      fields: "files(id, name, webViewLink, createdTime, description, mimeType)",
+      pageSize: 10, // Limit results to most relevant matches
+      ...(query ? {} : { orderBy: "modifiedTime desc" }) // Only use orderBy when not searching
     });
+
+    // Add export links to each file for easier content access later
+    const files = response.data.files || [];
+    for (const file of files) {
+      const fileResponse = await drive.files.get({
+        fileId: file.id!,
+        fields: 'exportLinks'
+      });
+      file.exportLinks = fileResponse.data.exportLinks;
+    }
 
     return response.data.files || [];
   } catch (error) {
