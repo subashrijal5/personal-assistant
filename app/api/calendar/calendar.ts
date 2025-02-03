@@ -8,6 +8,62 @@ const WORKING_HOURS = {
   slotDuration: 30, // minutes
 };
 
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+  description?: string;
+  attendees?: { email: string; name?: string }[];
+  location?: string;
+  status: string;
+}
+
+export interface ListEventsOptions {
+  timeMin?: Date;
+  timeMax?: Date;
+  maxResults?: number;
+  orderBy?: 'startTime' | 'updated';
+  query?: string; // For text search within events
+
+  singleEvents?: boolean; // Whether to expand recurring events
+}
+
+export async function listCalendarEvents(options: ListEventsOptions = {}): Promise<CalendarEvent[]> {
+  const { calendar } = await getClient();
+  
+  try {
+    const response = await calendar.events.list({
+      calendarId: 'primary',
+      timeMin: options.timeMin?.toISOString() || new Date().toISOString(),
+      timeMax: options.timeMax?.toISOString(),
+      maxResults: options.maxResults || 100,
+      orderBy: options.orderBy || 'startTime',
+      q: options.query,
+      showDeleted: false,
+      singleEvents: options.singleEvents ?? true,
+    
+    });
+
+    return (response.data.items || []).map(event => ({
+      id: event.id!,
+      title: event.summary!,
+      start: event.start?.dateTime || event.start!.date as string,
+      end: event.end?.dateTime || event.end!.date as string,
+      description: event.description ?? "",
+      attendees: event.attendees?.map(attendee => ({
+        email: attendee.email!,
+        name: attendee.displayName ?? ""
+      })),
+      location: event.location ?? "",
+      status: event.status ?? "Unknown"
+    }));
+  } catch (error) {
+    console.error('Error fetching calendar events:', error);
+    throw new Error('Failed to fetch calendar events');
+  }
+}
+
 export async function getAvailableCalendarSlots({
   start,
   end,

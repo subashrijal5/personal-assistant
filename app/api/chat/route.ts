@@ -4,6 +4,8 @@ import { z } from "zod";
 import {
   createCalendarEvent,
   getNextAvailableSlots,
+  listCalendarEvents,
+  ListEventsOptions,
 } from "@/app/api/calendar/calendar";
 import { getEmails, sendEmail } from "@/lib/email";
 import {
@@ -68,9 +70,92 @@ Your goal is to make the user's life easier by managing their tasks, communicati
         description: "Get available time slots for a given number of days",
         parameters: z.object({ numberOfDays: z.number().min(1).max(30) }),
         execute: async function ({ numberOfDays }) {
-          return await getNextAvailableSlots(numberOfDays);
+          const dates = await getNextAvailableSlots(numberOfDays);
+
+          // Group slots by date
+          const groupedSlots = dates.reduce((acc, date) => {
+            const dateKey = date.toLocaleDateString("en-US", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+              timeZone: "Asia/Tokyo",
+            });
+
+            const timeStr = date.toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+              timeZone: "Asia/Tokyo",
+              hour12: true,
+            });
+
+            if (!acc[dateKey]) {
+              acc[dateKey] = [];
+            }
+            acc[dateKey].push(timeStr);
+            return acc;
+          }, {} as Record<string, string[]>);
+
+          return groupedSlots;
         },
       }),
+      listEvents: tool({
+        description: "List calendar events with advanced filtering options",
+        parameters: z.object({
+          timeMin: z.string().optional(), // ISO string
+          timeMax: z.string().optional(), // ISO string
+          maxResults: z.number().min(1).max(100).optional(),
+          orderBy: z.enum(['startTime', 'updated']).optional(),
+          query: z.string().optional(),
+          status: z.enum(['confirmed', 'tentative', 'cancelled']).optional(),
+          singleEvents: z.boolean().optional(),
+        }),
+        execute: async function (params) {
+          const options: ListEventsOptions = {
+            ...params,
+            timeMin: params.timeMin ? new Date(params.timeMin) : undefined,
+            timeMax: params.timeMax ? new Date(params.timeMax) : undefined,
+          };
+          
+          const events = await listCalendarEvents(options);
+          
+          // Group events by date
+          const groupedEvents = events.reduce((acc, event) => {
+            const date = new Date(event.start);
+            const dateKey = date.toLocaleDateString("en-US", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+              timeZone: "Asia/Tokyo",
+            });
+
+            if (!acc[dateKey]) {
+              acc[dateKey] = [];
+            }
+
+            acc[dateKey].push({
+              id: event.id,
+              title: event.title,
+              time: date.toLocaleTimeString("en-US", {
+                hour: "2-digit",
+                minute: "2-digit",
+                timeZone: "Asia/Tokyo",
+                hour12: true,
+              }),
+              description: event.description,
+              attendees: event.attendees,
+              location: event.location,
+              status: event.status,
+            });
+
+            return acc;
+          }, {} as Record<string, unknown[]>);
+
+          return groupedEvents;
+        },
+      }),
+
       createCalendarEvent: tool({
         description: "Schedule a calendar event and return event details",
         parameters: z.object({
@@ -213,31 +298,31 @@ Your goal is to make the user's life easier by managing their tasks, communicati
     },
     maxSteps: 5,
     messages: [systemMessage, ...messages],
-    onFinish(event) {
-      // console.log("🚀 ~ file: route.ts:215 ~ event:", )
-      const isgetDocContent = event.toolResults.filter((tr) => tr.toolName === 'getDocContent');
-      if(isgetDocContent.length > 0) {
+    // onFinish(event) {
+    //   // console.log("🚀 ~ file: route.ts:215 ~ event:", )
+    //   const isgetDocContent = event.toolResults.filter((tr) => tr.toolName === 'getDocContent');
+    //   if(isgetDocContent.length > 0) {
 
-      }
-      // Check if this was a getDocContent call
-      // if (
-      //   event.messages[event.messages.length - 2]?.function_call?.name === 'getDocContent' &&
-      //   event.messages[event.messages.length - 1]?.content
-      // ) {
-      //   try {
-      //     const result = JSON.parse(event.messages[event.messages.length - 1].content);
-      //     if (result.success && result.document) {
-      //       // Add a message requesting analysis of the document
-      //       event.messages.push({
-      //         role: 'user',
-      //         content: `Here's the document content I retrieved. Please analyze it and provide a clear, concise summary focusing on the main points and key takeaways:\n\nTitle: ${result.document.title}\n\nContent:\n${result.document.content}`
-      //       });
-      //     }
-      //   } catch (error) {
-      //     console.error('Error parsing getDocContent result:', error);
-      //   }
-      // }
-    },
+    //   }
+    //   // Check if this was a getDocContent call
+    //   // if (
+    //   //   event.messages[event.messages.length - 2]?.function_call?.name === 'getDocContent' &&
+    //   //   event.messages[event.messages.length - 1]?.content
+    //   // ) {
+    //   //   try {
+    //   //     const result = JSON.parse(event.messages[event.messages.length - 1].content);
+    //   //     if (result.success && result.document) {
+    //   //       // Add a message requesting analysis of the document
+    //   //       event.messages.push({
+    //   //         role: 'user',
+    //   //         content: `Here's the document content I retrieved. Please analyze it and provide a clear, concise summary focusing on the main points and key takeaways:\n\nTitle: ${result.document.title}\n\nContent:\n${result.document.content}`
+    //   //       });
+    //   //     }
+    //   //   } catch (error) {
+    //   //     console.error('Error parsing getDocContent result:', error);
+    //   //   }
+    //   // }
+    // },
   });
 
   return response.toDataStreamResponse();

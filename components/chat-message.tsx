@@ -10,6 +10,7 @@ import ReadEmail from "./tools/read-email";
 import Task from "./tools/task";
 import Doc from "./tools/doc";
 import AnalyseDocument from "./tools/analyse-document";
+import ListEvents from "./tools/list-events";
 
 export function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.role === "user";
@@ -33,6 +34,8 @@ export function ChatMessage({ message }: ChatMessageProps) {
         return <Doc toolInvocation={toolInvocation} />;
       case "getDocContent":
         return <AnalyseDocument toolInvocation={toolInvocation} />;
+      case "listEvents":
+        return <ListEvents toolInvocation={toolInvocation} />;
       default:
         return <DefaultTool toolInvocation={toolInvocation} />;
     }

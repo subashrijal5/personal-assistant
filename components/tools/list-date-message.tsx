@@ -11,9 +11,9 @@ export default function ListDateMessage({
 }) {
   const result: Record<string, string[]> =
     toolInvocation.state === "result" ? toolInvocation.result : {};
+    console.log("🚀 ~ file: list-date-message.tsx:13 ~ result:", result)
   const { setInput, handleSubmit } = useChatContext();
   const handleDateClick = (date: string, time: string) => {
-    // setSelectedDate(date);
     setInput(`I want to book an appointment on ${date} at ${time}`);
     handleSubmit();
   };
