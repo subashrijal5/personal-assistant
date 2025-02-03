@@ -12,7 +12,7 @@ import {
   listTasks,
   updateTaskStatus,
 } from "@/lib/tasks";
-import { createDoc, listDocs, updateDoc } from "@/lib/docs";
+import { createDoc, getDocContent, listDocs, updateDoc } from "@/lib/docs";
 
 export const maxDuration = 30;
 
@@ -46,9 +46,15 @@ export async function POST(req: Request) {
 When interacting:
 1. Be concise and professional in your responses
 2. Always explain and return small message along with a tool call to execute the action
-2. Always confirm important actions before executing them
-3. Maintain user privacy and security
-4. Ask for clarification when needed
+3. When analyzing documents:
+   - First use getDocContent to fetch the document
+   - Then analyze the content and provide a concise summary
+   - Focus on key points, main ideas, and important details
+   - Format the response in a clear, structured way
+   - Use multiple steps to complete the action
+4. Always confirm important actions before executing them
+5. Maintain user privacy and security
+6. Ask for clarification when needed
 5. Provide helpful suggestions and reminders
 6. Use natural, conversational language
 
@@ -191,8 +197,47 @@ Your goal is to make the user's life easier by managing their tasks, communicati
           return await listDocs(query);
         },
       }),
+      getDocContent: tool({
+        description: "Get the content of a Google Doc by its ID",
+        parameters: z.object({
+          documentId: z.string().describe('The ID of the document to retrieve')
+        }),
+        execute: async function ({ documentId }) {
+          const result = await getDocContent(documentId);
+          if (!result.success) {
+            throw new Error(result.error);
+          }
+          return result;
+        },
+      }),
     },
+    maxSteps: 5,
     messages: [systemMessage, ...messages],
+    onFinish(event) {
+      // console.log("🚀 ~ file: route.ts:215 ~ event:", )
+      const isgetDocContent = event.toolResults.filter((tr) => tr.toolName === 'getDocContent');
+      if(isgetDocContent.length > 0) {
+
+      }
+      // Check if this was a getDocContent call
+      // if (
+      //   event.messages[event.messages.length - 2]?.function_call?.name === 'getDocContent' &&
+      //   event.messages[event.messages.length - 1]?.content
+      // ) {
+      //   try {
+      //     const result = JSON.parse(event.messages[event.messages.length - 1].content);
+      //     if (result.success && result.document) {
+      //       // Add a message requesting analysis of the document
+      //       event.messages.push({
+      //         role: 'user',
+      //         content: `Here's the document content I retrieved. Please analyze it and provide a clear, concise summary focusing on the main points and key takeaways:\n\nTitle: ${result.document.title}\n\nContent:\n${result.document.content}`
+      //       });
+      //     }
+      //   } catch (error) {
+      //     console.error('Error parsing getDocContent result:', error);
+      //   }
+      // }
+    },
   });
 
   return response.toDataStreamResponse();

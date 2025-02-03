@@ -90,7 +90,7 @@ function DocCard({ doc }: { doc: Doc }) {
 
   const handleDocClick = () => {
     setInput(
-      `Can you check this document and give me an overview? Document ID: ${doc.id}`
+      `Use the getDocContent tool to fetch this document (ID: ${doc.id})`
     );
   };
 

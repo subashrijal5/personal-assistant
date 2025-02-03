@@ -184,6 +184,45 @@ export async function updateDoc(documentId: string, content: string) {
   }
 }
 
+export async function getDocContent(documentId: string) {
+  try {
+    const { drive } = await getDocsClient();
+
+    // First get the export link for plain text
+    const file = await drive.files.get({
+      fileId: documentId,
+      fields: 'name,mimeType,exportLinks'
+    });
+
+    if (!file.data.exportLinks?.['text/plain']) {
+      throw new Error('Could not get text export link');
+    }
+
+    // Download the text content
+    const response = await drive.files.export({
+      fileId: documentId,
+      mimeType: 'text/plain'
+    }, {
+      responseType: 'text'
+    });
+
+    return {
+      success: true,
+      document: {
+        id: documentId,
+        title: file.data.name,
+        content: response.data,
+      }
+    };
+  } catch (error) {
+    console.error('Error getting document content:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
 export async function listDocs(query?: string) {
   try {
     const { drive } = await getDocsClient();

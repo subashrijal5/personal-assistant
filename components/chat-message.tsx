@@ -1,4 +1,4 @@
-import { Bot, User } from "lucide-react";
+import { Bot,  User } from "lucide-react";
 import { motion } from "framer-motion";
 import Markdown from "react-markdown";
 import { ChatMessageProps } from "@/types/chat";
@@ -9,6 +9,7 @@ import MeetingCreateSuccess from "./tools/meeting-create-success";
 import ReadEmail from "./tools/read-email";
 import Task from "./tools/task";
 import Doc from "./tools/doc";
+import AnalyseDocument from "./tools/analyse-document";
 
 export function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.role === "user";
@@ -30,6 +31,8 @@ export function ChatMessage({ message }: ChatMessageProps) {
       case "createDoc":
       case "listDocs":
         return <Doc toolInvocation={toolInvocation} />;
+      case "getDocContent":
+        return <AnalyseDocument toolInvocation={toolInvocation} />;
       default:
         return <DefaultTool toolInvocation={toolInvocation} />;
     }
