@@ -1,0 +1,27 @@
+{
+  "chat": {
+    "newChat": "New Chat",
+    "welcome": {
+      "title": "Welcome to Makai Bot",
+      "description": "I'm here to help you learn more about Subash, his projects, and schedule meetings. What would you like to know?"
+    },
+    "sidebar": {
+      "toggleOpen": "Open Sidebar",
+      "toggleClose": "Close Sidebar"
+    },
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "send": "Send message",
+      "retry": "Retry"
+    },
+    "input": {
+      "placeholder": "Message Makai Bot...",
+      "hint": "Press Enter to send, Shift + Enter for new line"
+    },
+    "shortcuts": {
+      "newChat": "⌘ ⇧ A",
+      "toggleSidebar": "⌘ B"
+    }
+  }
+}

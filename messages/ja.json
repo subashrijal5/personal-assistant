@@ -1,0 +1,27 @@
+{
+  "chat": {
+    "newChat": "新規チャット",
+    "welcome": {
+      "title": "Makai Botへようこそ",
+      "description": "スバッシュや彼のプロジェクトについての情報提供やミーティングの予約のお手伝いをさせていただきます。何について知りたいですか？"
+    },
+    "sidebar": {
+      "toggleOpen": "サイドバーを開く",
+      "toggleClose": "サイドバーを閉じる"
+    },
+    "actions": {
+      "edit": "編集",
+      "delete": "削除",
+      "send": "メッセージを送信",
+      "retry": "再試行"
+    },
+    "input": {
+      "placeholder": "Makai Botにメッセージを送信...",
+      "hint": "Enterで送信、Shift + Enterで改行"
+    },
+    "shortcuts": {
+      "newChat": "⌘ ⇧ A",
+      "toggleSidebar": "⌘ B"
+    }
+  }
+}
