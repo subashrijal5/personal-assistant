@@ -11,6 +11,7 @@
   "dependencies": {
     "@ai-sdk/google": "^1.1.8",
     "@clerk/nextjs": "^6.10.6",
+    "@googlemaps/google-maps-services-js": "^3.4.0",
     "@radix-ui/react-slot": "^1.1.1",
     "@types/html-to-docx": "^1.8.0",
     "ai": "^4.1.16",

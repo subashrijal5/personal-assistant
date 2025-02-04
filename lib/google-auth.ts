@@ -13,6 +13,7 @@ export const SCOPES = [
   "https://mail.google.com/",
   "https://www.googleapis.com/auth/tasks",
   "https://www.googleapis.com/auth/tasks.readonly",
+  "https://www.googleapis.com/auth/cloud-platform",
 ];
 
 export function getGoogleAuthClient() {
@@ -31,6 +32,7 @@ export function getGoogleServices(auth: OAuth2Client) {
     sheets: google.sheets({ version: "v4", auth }),
     gmail: google.gmail({ version: "v1", auth }),
     tasks: google.tasks({ version: "v1", auth }),
+    places: google.places({ version: "v1", auth }),
   };
 }
 

@@ -15,6 +15,7 @@ import {
   updateTaskStatus,
 } from "@/lib/tasks";
 import { createDoc, getDocContent, listDocs, updateDoc } from "@/lib/docs";
+import { PlaceType, searchPlaces } from "@/lib/places";
 
 export const maxDuration = 30;
 
@@ -66,6 +67,23 @@ Your goal is to make the user's life easier by managing their tasks, communicati
   const response = streamText({
     model: generateModel,
     tools: {
+      searchPlaces: tool({
+        description: "Search for places using Google Places API with various filters",
+        parameters: z.object({
+          query: z.string(),
+          type: z.nativeEnum(PlaceType).optional(),
+          radius: z.number().min(100).max(50000).optional(), // radius in meters
+          location: z.object({
+            lat: z.number(),
+            lng: z.number()
+          }).optional(),
+          language: z.string().optional(),
+          openNow: z.boolean().optional()
+        }),
+        execute: async function (params) {
+          return await searchPlaces(params);
+        },
+      }),
       getAvailability: tool({
         description: "Get available time slots for a given number of days",
         parameters: z.object({ numberOfDays: z.number().min(1).max(30) }),
