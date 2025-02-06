@@ -24,7 +24,7 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
               : "bg-white dark:bg-black"
           }`}
         >
-          <div className="max-w-3xl mx-auto py-4">
+          <div className="max-w-4xl mx-auto py-4">
             <ChatMessage message={message} />
           </div>
         </div>
@@ -32,7 +32,7 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
 
       {isLoading && (
         <div className="w-full bg-zinc-50 dark:bg-zinc-900/50">
-          <div className="max-w-3xl mx-auto py-4">
+          <div className="max-w-4xl mx-auto py-4">
             <div className="flex items-center gap-4 px-4">
               <div className="w-8 h-8 rounded-lg bg-black/10 dark:bg-white/10 flex items-center justify-center">
                 <Loader2 className="w-5 h-5 text-black dark:text-white animate-spin" />

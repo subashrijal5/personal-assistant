@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getGoogleAuthClient, SCOPES } from '@/lib/google-auth';
+import { getGoogleAuthClient, SCOPES } from '@/lib/server/google-auth';
 import { cookies } from 'next/headers';
 
 export async function GET() {

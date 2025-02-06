@@ -7,15 +7,22 @@ import {
   listCalendarEvents,
   ListEventsOptions,
 } from "@/app/api/calendar/calendar";
-import { getEmails, sendEmail } from "@/lib/email";
+import { getEmails, sendEmail } from "@/lib/server/email";
 import {
   createTask,
   createTaskList,
   listTasks,
   updateTaskStatus,
-} from "@/lib/tasks";
-import { createDoc, getDocContent, listDocs, updateDoc } from "@/lib/docs";
-import { PlaceType, searchPlaces } from "@/lib/places";
+} from "@/lib/server/tasks";
+import {
+  createDoc,
+  getDocContent,
+  listDocs,
+  updateDoc,
+} from "@/lib/server/docs";
+import { PlaceType, searchPlaces } from "@/lib/server/places";
+import { getLocation } from "@/lib/server/get-location";
+import { searchWeb } from "@/lib/server/search";
 
 export const maxDuration = 30;
 
@@ -26,6 +33,10 @@ export async function POST(req: Request) {
     role: "system",
     content: `You are a highly capable personal assistant, designed to help manage various aspects of daily life and work. Your capabilities include:
 
+    When user ask for daily overview, you should provide a concise summary of upcoming events,  tasks,  emails, etc with good message in users lamguage, Like have a good day etc. 
+    Always use proper iosString whenever you need to use date in the tool and message, never use terms like today, tomorrow, next week, etc.
+    Always response in the user's language, for example, if user is using Japanese, always respond in Japanese but if user ask to translate, translate it in targeted language.
+    Use multiple steps and tools to accomplish the task whenever necessary.
 1. Email Management:
    - Reading and summarizing emails
    - Drafting and sending emails
@@ -67,18 +78,41 @@ Your goal is to make the user's life easier by managing their tasks, communicati
   const response = streamText({
     model: generateModel,
     tools: {
+      searchWeb: tool({
+        description: "Search web content using google custom search",
+        parameters: z.object({
+          query: z
+            .string()
+            .min(3)
+            .max(100)
+            .describe(
+              "The search query minimum length is 3 and maximum length is 100"
+            ),
+          timeout: z.number().min(1000).max(30000).optional(),
+        }),
+        execute: async function ({ query, timeout }) {
+          return await searchWeb({
+            query,
+            num: 10,
+            timeout,
+          });
+        },
+      }),
       searchPlaces: tool({
-        description: "Search for places using Google Places API with various filters",
+        description:
+          "Search for places using Google Places API with various filters",
         parameters: z.object({
           query: z.string(),
           type: z.nativeEnum(PlaceType).optional(),
           radius: z.number().min(100).max(50000).optional(), // radius in meters
-          location: z.object({
-            lat: z.number(),
-            lng: z.number()
-          }).optional(),
+          location: z
+            .object({
+              lat: z.number(),
+              lng: z.number(),
+            })
+            .optional(),
           language: z.string().optional(),
-          openNow: z.boolean().optional()
+          openNow: z.boolean().optional(),
         }),
         execute: async function (params) {
           return await searchPlaces(params);
@@ -117,15 +151,28 @@ Your goal is to make the user's life easier by managing their tasks, communicati
           return groupedSlots;
         },
       }),
+      getLocation: tool({
+        description: "Get location information of the user ",
+        execute: async function () {
+          return await getLocation();
+        },
+        parameters: z.object({}),
+      }),
       listEvents: tool({
         description: "List calendar events with advanced filtering options",
         parameters: z.object({
-          timeMin: z.string().optional(), // ISO string
-          timeMax: z.string().optional(), // ISO string
+          timeMin: z
+            .string()
+            .optional()
+            .describe("Should be future date in ISOstring format"), // ISO string
+          timeMax: z
+            .string()
+            .optional()
+            .describe("Should be future date in ISOstring format"), // ISO string
           maxResults: z.number().min(1).max(100).optional(),
-          orderBy: z.enum(['startTime', 'updated']).optional(),
+          orderBy: z.enum(["startTime", "updated"]).optional(),
           query: z.string().optional(),
-          status: z.enum(['confirmed', 'tentative', 'cancelled']).optional(),
+          status: z.enum(["confirmed", "tentative", "cancelled"]).optional(),
           singleEvents: z.boolean().optional(),
         }),
         execute: async function (params) {
@@ -134,9 +181,8 @@ Your goal is to make the user's life easier by managing their tasks, communicati
             timeMin: params.timeMin ? new Date(params.timeMin) : undefined,
             timeMax: params.timeMax ? new Date(params.timeMax) : undefined,
           };
-          
           const events = await listCalendarEvents(options);
-          
+
           // Group events by date
           const groupedEvents = events.reduce((acc, event) => {
             const date = new Date(event.start);
@@ -191,13 +237,23 @@ Your goal is to make the user's life easier by managing their tasks, communicati
         },
       }),
       readEmails: tool({
-        description: "Fetch and summarize recent emails",
+        description: "Fetch and summarize recent emails with optional filters",
         parameters: z.object({
           count: z.number().min(1).max(50),
           folder: z.string().optional(),
+          filters: z
+            .object({
+              fromDate: z
+                .string()
+                .optional()
+                .describe("From date (YYYY-MM-DD)"),
+              toDate: z.string().optional().describe("To date (YYYY-MM-DD)"),
+              query: z.string().optional().describe("Search query"),
+            })
+            .optional(),
         }),
-        execute: async function ({ count, folder }) {
-          return await getEmails(count, folder);
+        execute: async function ({ count, folder, filters }) {
+          return await getEmails(count, folder, filters);
         },
       }),
       sendEmail: tool({
@@ -237,8 +293,16 @@ Your goal is to make the user's life easier by managing their tasks, communicati
       listTasks: tool({
         description: "List tasks from a specific task list",
         parameters: z.object({
-          listId: z.string().optional(),
-          showCompleted: z.boolean().optional(),
+          listId: z
+            .string()
+            .optional()
+            .describe(
+              "The ID of the task list, or empty to list tasks for the default task list"
+            ),
+          showCompleted: z
+            .boolean()
+            .optional()
+            .describe("Whether to include completed tasks"),
         }),
         execute: async function (params) {
           return await listTasks(params.listId, params.showCompleted);
@@ -264,20 +328,30 @@ Your goal is to make the user's life easier by managing their tasks, communicati
           "Create a new Google Doc. I'll help format the content professionally using Google Docs styles. Just provide the content in plain text, and I'll structure it with appropriate headings, paragraphs, and formatting.",
         parameters: z.object({
           title: z.string().describe("The title of the document"),
-          content: z.string().describe("The content of the document in plain text. I'll help format it professionally."),
-          folderId: z.string().optional().describe("Optional Google Drive folder ID to save the document in"),
+          content: z
+            .string()
+            .describe(
+              "The content of the document in plain text. I'll help format it professionally."
+            ),
+          folderId: z
+            .string()
+            .optional()
+            .describe(
+              "Optional Google Drive folder ID to save the document in"
+            ),
         }),
         execute: async function (params) {
           // First create the document
           const doc = await createDoc({
             title: params.title,
             content: params.content,
-            folderId: params.folderId
+            folderId: params.folderId,
           });
 
           return {
             ...doc,
-            message: "I've created your document and formatted it professionally. You can now open it to view and edit."
+            message:
+              "I've created your document and formatted it professionally. You can now open it to view and edit.",
           };
         },
       }),
@@ -292,9 +366,13 @@ Your goal is to make the user's life easier by managing their tasks, communicati
         },
       }),
       listDocs: tool({
-        description: "Search and list Google Docs. If no query is provided, lists recent docs.",
+        description:
+          "Search and list Google Docs. If no query is provided, lists recent docs.",
         parameters: z.object({
-          query: z.string().optional().describe('Search query to find specific documents')
+          query: z
+            .string()
+            .optional()
+            .describe("Search query to find specific documents"),
         }),
         execute: async function ({ query }) {
           return await listDocs(query);
@@ -303,7 +381,7 @@ Your goal is to make the user's life easier by managing their tasks, communicati
       getDocContent: tool({
         description: "Get the content of a Google Doc by its ID",
         parameters: z.object({
-          documentId: z.string().describe('The ID of the document to retrieve')
+          documentId: z.string().describe("The ID of the document to retrieve"),
         }),
         execute: async function ({ documentId }) {
           const result = await getDocContent(documentId);
@@ -316,31 +394,6 @@ Your goal is to make the user's life easier by managing their tasks, communicati
     },
     maxSteps: 5,
     messages: [systemMessage, ...messages],
-    // onFinish(event) {
-    //   // console.log("🚀 ~ file: route.ts:215 ~ event:", )
-    //   const isgetDocContent = event.toolResults.filter((tr) => tr.toolName === 'getDocContent');
-    //   if(isgetDocContent.length > 0) {
-
-    //   }
-    //   // Check if this was a getDocContent call
-    //   // if (
-    //   //   event.messages[event.messages.length - 2]?.function_call?.name === 'getDocContent' &&
-    //   //   event.messages[event.messages.length - 1]?.content
-    //   // ) {
-    //   //   try {
-    //   //     const result = JSON.parse(event.messages[event.messages.length - 1].content);
-    //   //     if (result.success && result.document) {
-    //   //       // Add a message requesting analysis of the document
-    //   //       event.messages.push({
-    //   //         role: 'user',
-    //   //         content: `Here's the document content I retrieved. Please analyze it and provide a clear, concise summary focusing on the main points and key takeaways:\n\nTitle: ${result.document.title}\n\nContent:\n${result.document.content}`
-    //   //       });
-    //   //     }
-    //   //   } catch (error) {
-    //   //     console.error('Error parsing getDocContent result:', error);
-    //   //   }
-    //   // }
-    // },
   });
 
   return response.toDataStreamResponse();

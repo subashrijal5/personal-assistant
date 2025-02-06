@@ -1,26 +1,35 @@
 "use client";
 
-import { Plus, PanelLeftClose, PanelLeft, Edit2, Trash2, Bot, MessageSquare } from "lucide-react";
+import {
+  Plus,
+  PanelLeftClose,
+  PanelLeft,
+  Edit2,
+  Trash2,
+  Bot,
+  MessageSquare,
+} from "lucide-react";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTranslations } from 'next-intl';
+import { useTranslations } from "next-intl";
 import { ChatInput } from "./chat-input";
 import { format } from "date-fns";
 import { ChatExamples } from "./chat-examples";
 import { ChatMessage } from "./chat-message";
 import { useChatContext } from "./chat-context";
 import { useChatStore } from "@/store/chat-store";
+import { v4 as uuid } from "uuid";
 
 export function FullPageChat() {
-  const t = useTranslations('chat');
+  const t = useTranslations("chat");
   const {
     chats,
     activeChat,
     createChat,
     deleteChat,
     setActiveChat,
-    initialize,
+    addMessage,
   } = useChatStore();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
@@ -41,30 +50,24 @@ export function FullPageChat() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
-  // Initialize chat store
-  useEffect(() => {
-    // document.body.classList.add("overflow-hidden");
-    initialize();
-  }, []);
-
   // Setup keyboard shortcuts
   useKeyboardShortcuts({
-    'mod+b': {
-      handler: () => setIsSidebarOpen(prev => !prev),
-      description: 'Toggle sidebar'
+    "mod+b": {
+      handler: () => setIsSidebarOpen((prev) => !prev),
+      description: "Toggle sidebar",
     },
-    'mod+shift+a': {
+    "mod+shift+a": {
       handler: createChat,
-      description: 'Create new chat'
+      description: "Create new chat",
     },
-    'mod+shift+backspace': {
+    "mod+shift+backspace": {
       handler: () => {
         if (activeChat) {
           deleteChat(activeChat);
         }
       },
-      description: 'Delete current chat'
-    }
+      description: "Delete current chat",
+    },
   });
 
   const handleTitleUpdate = (chatId: string) => {
@@ -98,7 +101,7 @@ export function FullPageChat() {
                   className="w-full flex items-center justify-center gap-2 rounded-lg bg-black dark:bg-white text-white dark:text-black p-2.5 text-sm hover:opacity-90 transition-opacity"
                 >
                   <Plus className="w-4 h-4" />
-                  {t('newChat')}
+                  {t("newChat")}
                 </button>
               </div>
               <div className="px-2 py-3 space-y-1">
@@ -177,14 +180,22 @@ export function FullPageChat() {
       </AnimatePresence>
 
       {/* Main Chat Area */}
-      <div className={`flex-1 flex flex-col min-w-0 ${isSidebarOpen ? 'pl-80' : 'pl-0'} transition-[padding] duration-300`}>
+      <div
+        className={`flex-1 flex flex-col min-w-0 ${
+          isSidebarOpen ? "pl-80" : "pl-0"
+        } transition-[padding] duration-300`}
+      >
         {/* Header */}
         <div className="h-14 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-4 bg-white/80 dark:bg-black/80 backdrop-blur-sm sticky top-0 z-30">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="flex items-center gap-2 rounded-lg px-3 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-sm font-medium group"
-              title={isSidebarOpen ? t('sidebar.toggleClose') : t('sidebar.toggleOpen')}
+              title={
+                isSidebarOpen
+                  ? t("sidebar.toggleClose")
+                  : t("sidebar.toggleOpen")
+              }
             >
               {isSidebarOpen ? (
                 <>
@@ -205,7 +216,9 @@ export function FullPageChat() {
             {activeChat && (
               <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400 truncate">
                 <span className="text-zinc-300 dark:text-zinc-600">•</span>
-                <span className="truncate">{chats.find(chat => chat.id === activeChat)?.title}</span>
+                <span className="truncate">
+                  {chats.find((chat) => chat.id === activeChat)?.title}
+                </span>
               </div>
             )}
           </div>
@@ -215,7 +228,9 @@ export function FullPageChat() {
               className="flex items-center gap-2 rounded-lg px-3 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-sm font-medium"
             >
               <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline-block whitespace-nowrap">{t('newChat')}</span>
+              <span className="hidden sm:inline-block whitespace-nowrap">
+                {t("newChat")}
+              </span>
               <kbd className="hidden sm:inline-flex items-center gap-1 text-[13px] font-medium text-zinc-400 dark:text-zinc-600 ml-1">
                 ⌘+shift+a
               </kbd>
@@ -238,16 +253,16 @@ export function FullPageChat() {
                     <Bot className="w-8 h-8 text-black dark:text-white" />
                   </div>
                   <h1 className="text-2xl font-semibold text-black dark:text-white mb-3">
-                    {t('welcome.title')}
+                    {t("welcome.title")}
                   </h1>
                   <p className="text-zinc-500 dark:text-zinc-400 text-base max-w-md mx-auto">
-                    {t('welcome.description')}
+                    {t("welcome.description")}
                   </p>
                 </motion.div>
                 <ChatExamples onSelectQuestion={handleExampleSelect} />
               </div>
             ) : (
-              <div className="max-w-3xl mx-auto p-4">
+              <div className="max-w-4xl mx-auto p-4">
                 <div className="space-y-6">
                   {messages.map((message) => (
                     <ChatMessage key={message.id} message={message} />
@@ -267,11 +282,18 @@ export function FullPageChat() {
 
         {/* Chat Input */}
         <div className="sticky bottom-0 bg-white/80 dark:bg-black/80 backdrop-blur-sm">
-          <div className="max-w-3xl mx-auto py-2">
+          <div className="max-w-4xl mx-auto py-2">
             <ChatInput
               input={input}
               handleInputChange={handleInputChange}
-              handleSubmit={handleSubmit}
+              handleSubmit={(e) => {
+                handleSubmit(e);
+                addMessage(activeChat!, {
+                  role: "user",
+                  content: input,
+                  id: uuid(),
+                });
+              }}
               isLoading={isLoading}
             />
           </div>

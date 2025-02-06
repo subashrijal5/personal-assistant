@@ -1,6 +1,6 @@
 import { ChatProvider } from "@/components/chat-context";
 import { FullPageChat } from "@/components/full-page-chat";
-import { checkGoogleAuth } from "@/lib/auth-utils";
+import { checkGoogleAuth } from "@/lib/server/auth-utils";
 import { AuthGate } from "@/components/auth-gate";
 
 export default async function Home() {

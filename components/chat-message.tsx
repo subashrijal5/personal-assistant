@@ -1,4 +1,4 @@
-import { Bot,  User } from "lucide-react";
+import { Bot, User } from "lucide-react";
 import { motion } from "framer-motion";
 import Markdown from "react-markdown";
 import { ChatMessageProps } from "@/types/chat";
@@ -10,13 +10,13 @@ import ReadEmail from "./tools/read-email";
 import Task from "./tools/task";
 import Doc from "./tools/doc";
 import AnalyseDocument from "./tools/analyse-document";
-import ListEvents from "./tools/list-events";
+import ListEvents from "./tools/search-results";
+import SearchResults from "./tools/search-results";
 
 export function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.role === "user";
 
   const getComponentByTool = (toolInvocation: ToolInvocation) => {
-
     switch (toolInvocation.toolName) {
       case "getAvailability":
         return <ListDateMessage toolInvocation={toolInvocation} />;
@@ -36,6 +36,8 @@ export function ChatMessage({ message }: ChatMessageProps) {
         return <AnalyseDocument toolInvocation={toolInvocation} />;
       case "listEvents":
         return <ListEvents toolInvocation={toolInvocation} />;
+      case "searchWeb":
+        return <SearchResults toolInvocation={toolInvocation} />;
       default:
         return <DefaultTool toolInvocation={toolInvocation} />;
     }
@@ -60,7 +62,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
       </div>
       <div className="flex-1 overflow-hidden">
         {message.toolInvocations && message.toolInvocations.length > 0 && (
-          <div className="flex items-center gap-4">
+          <div className=" overflow-y-auto max-h-80 mb-4">
             {message.toolInvocations.map((toolInvocation) => (
               <div key={toolInvocation.toolCallId}>
                 {getComponentByTool(toolInvocation)}

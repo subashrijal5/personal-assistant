@@ -2,15 +2,18 @@
   "name": "personal-assistant",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "NODE_OPTIONS='--loader ts-node/esm' ts-node --project tsconfig.server.json server.ts",
     "build": "next build",
-    "start": "next start",
+    "start": "NODE_ENV=production NODE_OPTIONS='--loader ts-node/esm' ts-node --project tsconfig.server.json server.ts",
     "lint": "next lint"
   },
   "dependencies": {
     "@ai-sdk/google": "^1.1.8",
     "@clerk/nextjs": "^6.10.6",
+    "@google-cloud/speech": "^6.7.0",
+    "@google-cloud/text-to-speech": "^5.8.0",
     "@googlemaps/google-maps-services-js": "^3.4.0",
     "@radix-ui/react-slot": "^1.1.1",
     "@types/html-to-docx": "^1.8.0",
@@ -29,19 +32,23 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^9.0.3",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7",
+    "uuid": "^11.0.5",
     "zustand": "^5.0.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@types/node": "^20",
+    "@types/node": "^20.17.17",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.1.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
   }
 }

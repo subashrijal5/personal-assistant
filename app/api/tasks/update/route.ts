@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { updateTaskStatus } from "@/lib/tasks";
+import { updateTaskStatus } from "@/lib/server/tasks";
 
 export async function POST(request: Request) {
   try {

@@ -1,6 +1,7 @@
 import { google } from "googleapis";
 import { OAuth2Client } from "google-auth-library";
 
+
 export const SCOPES = [
   "https://www.googleapis.com/auth/calendar",
   "https://www.googleapis.com/auth/drive",
@@ -14,6 +15,10 @@ export const SCOPES = [
   "https://www.googleapis.com/auth/tasks",
   "https://www.googleapis.com/auth/tasks.readonly",
   "https://www.googleapis.com/auth/cloud-platform",
+  "https://www.googleapis.com/auth/cloud-language",
+  "https://www.googleapis.com/auth/cloud-speech",
+  "https://www.googleapis.com/auth/cse"
+
 ];
 
 export function getGoogleAuthClient() {
@@ -33,6 +38,9 @@ export function getGoogleServices(auth: OAuth2Client) {
     gmail: google.gmail({ version: "v1", auth }),
     tasks: google.tasks({ version: "v1", auth }),
     places: google.places({ version: "v1", auth }),
+    speech: google.speech({ version: "v1", auth }),
+    texttospeech: google.texttospeech({ version: "v1", auth }),
+    customsearch: google.customsearch({ version: "v1", auth }),
   };
 }
 
