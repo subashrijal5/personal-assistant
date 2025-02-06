@@ -2,8 +2,8 @@
   "chat": {
     "newChat": "新規チャット",
     "welcome": {
-      "title": "Makai Botへようこそ",
-      "description": "スバッシュや彼のプロジェクトについての情報提供やミーティングの予約のお手伝いをさせていただきます。何について知りたいですか？"
+      "title": "Me-miniへようこそ",
+      "description": "Geminiを搭載したインテリジェントパーソナルアシスタント"
     },
     "sidebar": {
       "toggleOpen": "サイドバーを開く",
@@ -16,7 +16,7 @@
       "retry": "再試行"
     },
     "input": {
-      "placeholder": "Makai Botにメッセージを送信...",
+      "placeholder": "Me-miniにメッセージを送信...",
       "hint": "Enterで送信、Shift + Enterで改行"
     },
     "shortcuts": {

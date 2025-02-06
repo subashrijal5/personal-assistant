@@ -2,8 +2,8 @@
   "chat": {
     "newChat": "New Chat",
     "welcome": {
-      "title": "Welcome to Makai Bot",
-      "description": "I'm here to help you learn more about Subash, his projects, and schedule meetings. What would you like to know?"
+      "title": "Welcome to Me-mini",
+      "description": "Gemini-powered personal assistant"
     },
     "sidebar": {
       "toggleOpen": "Open Sidebar",
@@ -16,7 +16,7 @@
       "retry": "Retry"
     },
     "input": {
-      "placeholder": "Message Makai Bot...",
+      "placeholder": "Message Me-mini...",
       "hint": "Press Enter to send, Shift + Enter for new line"
     },
     "shortcuts": {
