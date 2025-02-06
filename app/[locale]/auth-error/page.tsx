@@ -1,11 +1,12 @@
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-export default function AuthErrorPage({
+export default async function AuthErrorPage({
   searchParams,
 }: {
-  searchParams: { error: string };
+  searchParams: Promise<{ error: string }>;
 }) {
+  const awaitedSearchParams = await searchParams;
   const errorMessages = {
     no_code: 'No authorization code was received from Google.',
     no_refresh_token:
@@ -16,7 +17,7 @@ export default function AuthErrorPage({
   };
 
   const errorMessage =
-    errorMessages[searchParams.error as keyof typeof errorMessages] ||
+    errorMessages[awaitedSearchParams.error as keyof typeof errorMessages] ||
     errorMessages.default;
 
   return (
