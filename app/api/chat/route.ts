@@ -23,6 +23,11 @@ import {
 import { PlaceType, searchPlaces } from "@/lib/server/places";
 import { getLocation } from "@/lib/server/get-location";
 import { searchWeb } from "@/lib/server/search";
+import {
+  createContact,
+  updateContact,
+  searchContacts,
+} from "@/lib/server/contacts";
 
 export const maxDuration = 30;
 
@@ -392,28 +397,179 @@ Your goal is to make the user's life easier by managing their tasks, communicati
           return result;
         },
       }),
-      // getWebContent: tool({
-      //   description: "Get the content of a web page by url",
-      //   parameters: z.object({
-      //     url: z.string().url().describe("The URL to visit"),
-      //   }),
-      //   execute: async function ({ url }) {
-      //     try {
-      //       const response = await fetch(url);
-      //       return await response.text();
-      //       // return { text };
-      //     } catch (error) {
-      //       console.log("🚀 ~ file: route.ts:88 ~ error:", error);
-      //       return "Something went wrong";
-      //     }
-      //   },
-      // }),
+      createContact: tool({
+        description: "Create a new contact in Google Contacts",
+        parameters: z.object({
+          lastName: z.string().optional(),
+          firstName: z.string().optional(),
+          phones: z
+            .array(
+              z.object({
+                value: z.string(),
+                type: z.enum(["mobile", "home", "work", "other"]),
+              })
+            )
+            .optional(),
+          emails: z
+            .array(
+              z.object({
+                value: z.string(),
+                type: z.enum(["home", "work", "other"]),
+              })
+            )
+            .optional(),
+          addresses: z.array(
+            z.object({
+              streetAddress: z.string().optional(),
+              city: z.string().optional(),
+              region: z.string().optional(),
+              postalCode: z.string().optional(),
+              country: z.string().optional(),
+              type: z.enum(["home", "work", "other"]),
+            })
+          ),
+          birthday: z
+            .object({
+              month: z.number().min(1).max(12),
+              day: z.number().min(1).max(31),
+            })
+            .optional(),
+          notes: z.string().optional(),
+        }),
+        execute: async function ({ ...params }) {
+          return await createContact({
+            lastName: params.lastName,
+            firstName: params.firstName,
+            phoneNumbers: params.phones,
+            emailAddresses: params.emails,
+            addresses: params.addresses,
+            birthdays: [
+              {
+                date: {
+                  month: params.birthday?.month,
+                  day: params.birthday?.day,
+                },
+              },
+            ],
+          });
+        },
+      }),
+      updateContact: tool({
+        description: "Update an existing contact in Google Contacts",
+        parameters: z.object({
+          contactId: z.string(),
+          lastName: z.string().optional(),
+          firstName: z.string().optional(),
+          phones: z
+            .array(
+              z.object({
+                value: z.string(),
+                type: z.enum(["mobile", "home", "work", "other"]),
+              })
+            )
+            .optional(),
+          emails: z
+            .array(
+              z.object({
+                value: z.string(),
+                type: z.enum(["home", "work", "other"]),
+              })
+            )
+            .optional(),
+          addresses: z.array(
+            z.object({
+              streetAddress: z.string().optional(),
+              city: z.string().optional(),
+              region: z.string().optional(),
+              postalCode: z.string().optional(),
+              country: z.string().optional(),
+              type: z.enum(["home", "work", "other"]),
+            })
+          ),
+          birthday: z
+            .object({
+              month: z.number().min(1).max(12),
+              day: z.number().min(1).max(31),
+            })
+            .optional(),
+          notes: z.string().optional(),
+        }),
+        execute: async function ({ ...params }) {
+          return await updateContact(params.contactId, {
+            lastName: params.lastName,
+            firstName: params.firstName,
+            phoneNumbers: params.phones,
+            emailAddresses: params.emails,
+            addresses: params.addresses,
+            birthdays: [
+              {
+                date: {
+                  month: params.birthday?.month,
+                  day: params.birthday?.day,
+                },
+              },
+            ],
+          });
+        },
+      }),
+      searchContacts: tool({
+        description: "Search for contacts in Google Contacts",
+        parameters: z.object({
+          query: z.string().describe("Search query"),
+        }),
+        execute: async function ({ query }) {
+          return await searchContacts(query);
+        },
+      }),
+      crawlUrl: tool({
+        description: "Test tool",
+        parameters: z.object({
+          url: z.string().describe("The URL to crawl. It should be https url. For example, For example, https://example.com"),
+        }),
+        execute: async function ({ url }) {
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+            const response = await fetch(url, {
+              signal: controller.signal,
+              headers: {
+                "User-Agent": "Mozilla/5.0 (compatible; PersonalAssistant/1.0)",
+                Accept:
+                  "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+              },
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const text = await response.text();
+            return { success: true, content: text };
+          } catch (error) {
+            console.error("Error fetching web content:", error);
+            return {
+              success: false,
+              error:
+                error instanceof Error
+                  ? error.message
+                  : "Failed to fetch web content",
+            };
+          }
+        },
+      }),
     },
     maxSteps: 5,
-    messages: [systemMessage, ...messages],
-    // system: systemMessage.content,
+    messages: messages,
+    system: systemMessage.content,
     experimental_continueSteps: true,
+    onFinish(event) {
+      console.log("onFinish", event);
+    },
+    onChunk(event) {
+      console.log("onChunk", event);
+    },
   });
-
   return response.toDataStreamResponse();
 }

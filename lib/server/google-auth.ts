@@ -17,7 +17,12 @@ export const SCOPES = [
   "https://www.googleapis.com/auth/cloud-platform",
   "https://www.googleapis.com/auth/cloud-language",
   "https://www.googleapis.com/auth/cloud-speech",
-  "https://www.googleapis.com/auth/cse"
+  "https://www.googleapis.com/auth/cse",
+  "https://www.googleapis.com/auth/contacts",
+  "https://www.googleapis.com/auth/contacts.other.readonly",
+  "https://www.googleapis.com/auth/contacts.readonly",
+
+
 
 ];
 
