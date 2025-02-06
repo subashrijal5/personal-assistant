@@ -23,5 +23,21 @@
       "newChat": "⌘ ⇧ A",
       "toggleSidebar": "⌘ B"
     }
+  },
+  "SearchResults": {
+    "title": "Search Results",
+    "completed": "Completed",
+    "searching": "Searching",
+    "noResults": "No results found"
+  },
+  "tools": {
+    "status": {
+      "analyzing": "Analyzing data...",
+      "processing": "Processing request...",
+      "thinking": "Thinking...",
+      "generating": "Generating response...",
+      "searching": "Searching...",
+      "done": "Done"
+    }
   }
 }

@@ -48,7 +48,8 @@ export async function searchWeb({
       })),
     };
   } catch (error) {
-    console.error("Web search error:", error?.response?.data?.error?.errors);
+    console.log("🚀 ~ file: search.ts:51 ~ error:", error)
+    // console.error("Web search error:", error?.response?.data?.error?.errors);
     // throw new Error(
     //   `Failed to search web content: ${(error as Error).message}`
     // );

@@ -134,7 +134,8 @@ export async function searchPlaces(params: PlaceSearchParams) {
     const requestBody = {
       textQuery: params.query,
       languageCode: params.language || "en",
-      ...(params.type && { includedTypes: [params.type] }),
+      // TODO: Type of google places need to be enum.
+      // ...(params.type && { includedTypes: [params.type] }),
       ...(params.location && {
         locationBias: {
           circle: {
@@ -148,7 +149,7 @@ export async function searchPlaces(params: PlaceSearchParams) {
       }),
       maxResultCount: 20,
     };
-
+    console.log("🚀 ~ file: places.ts:135 ~ requestBody:", requestBody)
     // Perform place search
     const searchResponse = await places.places.searchText({
       requestBody,
@@ -184,6 +185,6 @@ export async function searchPlaces(params: PlaceSearchParams) {
     };
   } catch (error) {
     console.error("Google Places API error:", error);
-    throw new Error(`Failed to fetch places: ${(error as Error).message}`);
+    return { places: [], total: 0, "message": "Failed to fetch places" };
   }
 }

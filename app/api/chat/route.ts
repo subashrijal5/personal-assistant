@@ -69,12 +69,13 @@ When interacting:
 4. Always confirm important actions before executing them
 5. Maintain user privacy and security
 6. Ask for clarification when needed
-5. Provide helpful suggestions and reminders
-6. Use natural, conversational language
+7. Provide helpful suggestions and reminders
+8. Use natural, conversational language
+9. Don't ask too many questions, for example, when user ask to find restaurant in tokyo, just find it.
+10. When User ask to find something near me, first check the location and then find the place.
 
 Your goal is to make the user's life easier by managing their tasks, communications, and information effectively while maintaining a professional and helpful demeanor.`,
   };
-
   const response = streamText({
     model: generateModel,
     tools: {
@@ -283,7 +284,7 @@ Your goal is to make the user's life easier by managing their tasks, communicati
         parameters: z.object({
           title: z.string(),
           notes: z.string().optional(),
-          due: z.string().optional(),
+          due: z.string().optional().describe("Due date in ISOstring format"),
           listId: z.string().optional(),
         }),
         execute: async function (params) {
@@ -391,9 +392,27 @@ Your goal is to make the user's life easier by managing their tasks, communicati
           return result;
         },
       }),
+      // getWebContent: tool({
+      //   description: "Get the content of a web page by url",
+      //   parameters: z.object({
+      //     url: z.string().url().describe("The URL to visit"),
+      //   }),
+      //   execute: async function ({ url }) {
+      //     try {
+      //       const response = await fetch(url);
+      //       return await response.text();
+      //       // return { text };
+      //     } catch (error) {
+      //       console.log("🚀 ~ file: route.ts:88 ~ error:", error);
+      //       return "Something went wrong";
+      //     }
+      //   },
+      // }),
     },
     maxSteps: 5,
     messages: [systemMessage, ...messages],
+    // system: systemMessage.content,
+    experimental_continueSteps: true,
   });
 
   return response.toDataStreamResponse();

@@ -23,5 +23,21 @@
       "newChat": "⌘ ⇧ A",
       "toggleSidebar": "⌘ B"
     }
+  },
+  "SearchResults": {
+    "title": "検索結果",
+    "completed": "完了",
+    "searching": "検索中",
+    "noResults": "結果が見つかりません"
+  },
+  "tools": {
+    "status": {
+      "analyzing": "データを分析中...",
+      "processing": "リクエストを処理中...",
+      "thinking": "考え中...",
+      "generating": "応答を生成中...",
+      "searching": "検索中...",
+      "done": "完了"
+    }
   }
 }

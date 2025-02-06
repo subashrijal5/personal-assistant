@@ -10,6 +10,7 @@ import React, {
 import { useChat, UseChatHelpers } from "ai/react";
 import { useChatStore } from "@/store/chat-store";
 import { Socket } from "socket.io-client";
+import { v4 as uuidv4 } from "uuid";
 // import { getSocket } from "@/lib/socketClient";
 // import { useAudioStream } from "@/hooks/useAudioStream";
 
@@ -86,13 +87,24 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     id: activeChat || undefined,
     initialMessages: currentChat?.messages || [],
     onFinish: (message) => {
+      console.log("🚀 ~ file: chat-context.tsx:89 ~ message:", message);
       if (activeChat) {
         addMessage(activeChat, message);
-        if(!socket) return;
+        if (!socket) return;
         socket.emit("speakLLMResponse", {
           text: message.content,
         });
       }
+    },
+    onError: (error) => {
+      if (activeChat) {
+        addMessage(activeChat, {
+          id: uuidv4(),
+          role: "assistant",
+          content: "Sorry, Some error occurred. Please try again later.",
+        });
+      }
+      console.error("Chat error:", error);
     },
   });
 

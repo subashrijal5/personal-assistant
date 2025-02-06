@@ -6,7 +6,6 @@ async function getTasksClient() {
   const cookieStore = await cookies();
   const refreshToken = cookieStore.get("google_refresh_token");
 
-
   if (!refreshToken?.value) {
     throw new Error("No refresh token found. Please authenticate first.");
   }
@@ -56,9 +55,9 @@ export async function createTaskList({ title }: TaskListParams) {
 export async function getTaskLists() {
   try {
     const tasks = await getTasksClient();
-    console.log("🚀 ~ file: tasks.ts:58 ~ tasks:", tasks)
+    console.log("🚀 ~ file: tasks.ts:58 ~ tasks:", tasks);
     const response = await tasks.tasklists.list();
-    console.log("🚀 ~ file: tasks.ts:59 ~ response:", response)
+    console.log("🚀 ~ file: tasks.ts:59 ~ response:", response);
 
     return response.data.items || [];
   } catch (error) {
@@ -67,15 +66,22 @@ export async function getTaskLists() {
   }
 }
 
-export async function createTask({ title, notes, due, listId = "@default" }: TaskParams) {
+export async function createTask({
+  title,
+  notes,
+  due,
+  listId = "@default",
+}: TaskParams) {
+  console.log("🚀 ~ file: tasks.ts:71 ~ title:", title, notes, due);
+  const date = due ? new Date(due).toISOString() : null;
   try {
     const tasks = await getTasksClient();
     const response = await tasks.tasks.insert({
       tasklist: listId,
       requestBody: {
         title,
-        notes,
-        due,
+        notes: notes ?? "",
+        due: date,
         status: "needsAction",
       },
     });
@@ -92,8 +98,16 @@ export async function createTask({ title, notes, due, listId = "@default" }: Tas
       },
     };
   } catch (error) {
-    console.error("Error creating task:", error);
-    throw error;
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    console.error("Error creating task:", error?.response?.data?.error?.errors);
+    // throw error;
+    return {
+      success: false,
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      error: error?.response?.data,
+    };
   }
 }
 
@@ -113,7 +127,11 @@ export async function listTasks(listId = "@default", showCompleted = false) {
   }
 }
 
-export async function updateTaskStatus(taskId: string, listId = "@default", completed = true) {
+export async function updateTaskStatus(
+  taskId: string,
+  listId = "@default",
+  completed = true
+) {
   try {
     const tasks = await getTasksClient();
     const response = await tasks.tasks.patch({
