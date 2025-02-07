@@ -7,7 +7,7 @@ type ReplacementRule = {
 };
 
 export class SpeechService {
-  constructor(private refreshToken?: string) {}
+  constructor(private refreshToken?: string, private language?: string) {}
 
   private async getAuthenticatedServices() {
     if (!this.refreshToken) {
@@ -61,13 +61,17 @@ export class SpeechService {
 
   async streamTextToSpeech(text: string) {
     const services = await this.getAuthenticatedServices();
-
+    const japaneseVoice = {
+      languageCode: "ja-JP",
+      name: "ja-JP-Wavenet-A",
+    };
+    const englishVoice = {
+      languageCode: "en-US",
+      name: "en-US-Neural2-D",
+    };
     const request = {
       input: { text: this.markdownToTTS(text) },
-      voice: {
-        languageCode: "en-US",
-        name: "en-US-Neural2-D",
-      },
+      voice: this.language === "ja" ? japaneseVoice : englishVoice,
       audioConfig: {
         audioEncoding: "LINEAR16",
         sampleRateHertz: 24000,

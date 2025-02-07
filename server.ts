@@ -29,10 +29,10 @@ app.prepare().then(() => {
       return;
     }
 
-    socket.on("speakLLMResponse", async ({ text }: { text: string }) => {
+    socket.on("speakLLMResponse", async ({ text, language }: { text: string, language: string }) => {
       try {
         const { SpeechService } = await import("./lib/server/ttsService.js");
-        const ttsService = new SpeechService(refreshToken);
+        const ttsService = new SpeechService(refreshToken, language);
         const audioStream = await ttsService.streamTextToSpeech(text);
 
         const chunks: Buffer[] = [];

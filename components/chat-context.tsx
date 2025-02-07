@@ -13,6 +13,7 @@ import { Socket } from "socket.io-client";
 import { v4 as uuidv4 } from "uuid";
 import { getSocket } from "@/lib/socketClient";
 import { useAudioStream } from "@/hooks/useAudioStream";
+import { useLocale } from "next-intl";
 
 interface ChatContextType extends UseChatHelpers {
   socket: Socket | null;
@@ -39,6 +40,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   const { playTTSAudio, stopTTS } = useAudioStream();
   const [socket, setSocket] = useState<Socket | null>(null);
   const currentChat = chats.find((chat) => chat.id === activeChat);
+  const locale = useLocale();
 
   // Initialize socket connection
   useEffect(() => {
@@ -93,6 +95,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         if (!socket) return;
         socket.emit("speakLLMResponse", {
           text: message.content,
+          language: locale,
         });
       }
     },
