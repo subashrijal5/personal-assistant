@@ -97,6 +97,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       }
     },
     onError: (error) => {
+      console.log("🚀 ~ error:", error)
       if (activeChat) {
         addMessage(activeChat, {
           id: uuidv4(),

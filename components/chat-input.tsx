@@ -1,8 +1,8 @@
-import { ChatInputProps } from "@/types/chat";
 import { motion } from "framer-motion";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Mic } from "lucide-react";
+import { useChatContext } from "./chat-context";
 
 interface SpeechRecognitionConstructor {
   new (): SpeechRecognition;
@@ -16,12 +16,8 @@ declare global {
   }
 }
 
-export function ChatInput({
-  input,
-  handleInputChange,
-  handleSubmit,
-  isVoiceMode = true,
-}: ChatInputProps) {
+export function ChatInput() {
+  const { setInput, handleSubmit, input } = useChatContext();
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -33,15 +29,12 @@ export function ChatInput({
   const submitInput = useCallback(() => {
     if (input.trim()) {
       handleSubmit({} as FormEvent<HTMLFormElement>);
-      handleInputChange({
-        target: { value: "" },
-      } as React.ChangeEvent<HTMLTextAreaElement>);
     }
-  }, [input, handleSubmit, handleInputChange]);
+  }, [input, handleSubmit]);
 
   // Initialize speech recognition
   useEffect(() => {
-    if (typeof window === "undefined" || !isVoiceMode) return;
+    if (typeof window === "undefined") return;
 
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -66,33 +59,17 @@ export function ChatInput({
         .map((result) => result[0].transcript)
         .join(" ");
 
-      console.log("Transcript:", transcript);
-      handleInputChange({
-        target: { value: transcript },
-      } as React.ChangeEvent<HTMLTextAreaElement>);
+      setInput(transcript);
     };
 
     recognition.onend = () => {
+      setIsRecording(false);
       console.log("Speech recognition ended");
-      // Restart recognition if it was stopped unexpectedly
-      if (isRecording) {
-        try {
-          recognition.start();
-        } catch (error) {
-          console.error("Failed to restart recording:", error);
-          setIsRecording(false);
-        }
-      } else {
-        setIsRecording(false);
-      }
     };
 
     recognition.onerror = (event: Event & { error: string }) => {
       console.error("Speech recognition error:", event.error);
-      // Only stop on critical errors
-      if (event.error !== "no-speech") {
-        setIsRecording(false);
-      }
+      setIsRecording(false);
     };
 
     recognitionRef.current = recognition;
@@ -106,7 +83,7 @@ export function ChatInput({
         }
       }
     };
-  }, [isVoiceMode, locale, handleInputChange, submitInput, isRecording]);
+  }, [locale, setInput, submitInput, isRecording]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -130,17 +107,18 @@ export function ChatInput({
     if (isRecording) {
       try {
         recognitionRef.current.stop();
+        setIsRecording(false);
         if (input.trim()) {
           submitInput();
+          setTimeout(() => {
+            setInput("");
+          }, 500);
         }
       } catch (error) {
         console.error("Error stopping recognition:", error);
       }
     } else {
-      handleInputChange({
-        target: { value: "" },
-      } as React.ChangeEvent<HTMLTextAreaElement>);
-
+      setInput("");
       try {
         recognitionRef.current.start();
       } catch (error) {
@@ -148,7 +126,7 @@ export function ChatInput({
         setIsRecording(false);
       }
     }
-  }, [isRecording, input, submitInput, handleInputChange]);
+  }, [isRecording, input, submitInput, setInput]);
 
   return (
     <div className="px-4">
@@ -171,7 +149,7 @@ export function ChatInput({
               className="w-full resize-none rounded-lg border border-zinc-200 bg-white/50 px-4 py-3.5 text-base leading-relaxed placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-0 dark:border-zinc-800 dark:bg-zinc-900/50 dark:placeholder:text-zinc-600 dark:focus:border-zinc-700"
               value={input}
               onChange={(e) => {
-                handleInputChange(e);
+                setInput(e.target.value);
                 // Ensure the textarea height is adjusted after content change
                 if (textareaRef.current) {
                   textareaRef.current.style.height = "auto";
@@ -192,19 +170,18 @@ export function ChatInput({
                 }
               }}
             />
-            {isVoiceMode && (
-              <button
-                type="button"
-                onClick={toggleRecording}
-                className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
-                  isRecording
-                    ? "bg-red-500 text-white hover:bg-red-600"
-                    : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
-                }`}
-              >
-                <Mic className="h-4 w-4" />
-              </button>
-            )}
+
+            <button
+              type="button"
+              onClick={toggleRecording}
+              className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
+                isRecording
+                  ? "bg-red-500 text-white hover:bg-red-600"
+                  : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
+              }`}
+            >
+              <Mic className="h-4 w-4" />
+            </button>
           </div>
         </form>
       </motion.div>

@@ -172,9 +172,14 @@ export class SpeechService {
       },
 
       // Links - extract text content only
+      // {
+      //   pattern: /\[([^\]]+)\]\(([^)]+)\)/g,
+      //   replacement: "$1",
+      // },
+      // remove links completely
       {
         pattern: /\[([^\]]+)\]\(([^)]+)\)/g,
-        replacement: "$1",
+        replacement: "",
       },
 
       // Lists - replace bullets with comma and space

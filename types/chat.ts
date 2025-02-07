@@ -5,13 +5,6 @@ export interface ChatMessageProps {
 
 }
 
-export interface ChatInputProps {
-  input: string;
-  isLoading: boolean;
-  isVoiceMode?: boolean;
-  handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
-}
 
 export interface ChatHeaderProps {
   title: string;

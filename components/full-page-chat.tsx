@@ -19,7 +19,6 @@ import { ChatExamples } from "./chat-examples";
 import { ChatMessage } from "./chat-message";
 import { useChatContext } from "./chat-context";
 import { useChatStore } from "@/store/chat-store";
-import { v4 as uuid } from "uuid";
 
 export function FullPageChat() {
   const t = useTranslations("chat");
@@ -29,21 +28,13 @@ export function FullPageChat() {
     createChat,
     deleteChat,
     setActiveChat,
-    addMessage,
   } = useChatStore();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const {
-    messages,
-    input,
-    handleInputChange,
-    handleSubmit,
-    isLoading,
-    setInput,
-  } = useChatContext();
+  const { messages,  isLoading, setInput, handleSubmit } = useChatContext();
 
   // Auto-scroll to bottom when messages change or during streaming
   useEffect(() => {
@@ -310,19 +301,7 @@ export function FullPageChat() {
         {/* Chat Input */}
         <div className="sticky bottom-0 bg-white/80 dark:bg-black/80 backdrop-blur-sm">
           <div className="max-w-4xl mx-auto py-2">
-            <ChatInput
-              input={input}
-              handleInputChange={handleInputChange}
-              handleSubmit={(e) => {
-                handleSubmit(e);
-                addMessage(activeChat!, {
-                  role: "user",
-                  content: input,
-                  id: uuid(),
-                });
-              }}
-              isLoading={isLoading}
-            />
+            <ChatInput />
           </div>
         </div>
       </div>

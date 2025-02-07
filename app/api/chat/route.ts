@@ -165,7 +165,7 @@ Your goal is to make the user's life easier by managing their tasks, communicati
         parameters: z.object({}),
       }),
       listEvents: tool({
-        description: "List calendar events with advanced filtering options",
+        description: "List calendar events and meetings with advanced filtering options",
         parameters: z.object({
           timeMin: z
             .string()
