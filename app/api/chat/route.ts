@@ -564,12 +564,6 @@ Your goal is to make the user's life easier by managing their tasks, communicati
     messages: messages,
     system: systemMessage.content,
     experimental_continueSteps: true,
-    onFinish(event) {
-      console.log("onFinish", event);
-    },
-    onChunk(event) {
-      console.log("onChunk", event);
-    },
   });
   return response.toDataStreamResponse();
 }
